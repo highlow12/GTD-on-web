@@ -18,7 +18,7 @@ function App() {
         </p>
       </div>
       <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
+        A GTD (Getting Things Done) web application
       </p>
     </>
   )
