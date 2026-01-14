@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from './supabaseClient'
+import { supabase, hasSupabaseCredentials } from './supabaseClient'
 import './App.css'
 
 function App() {
@@ -14,6 +14,11 @@ function App() {
   }, [])
 
   const fetchTasks = async () => {
+    if (!hasSupabaseCredentials) {
+      setLoading(false)
+      return
+    }
+    
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -34,6 +39,10 @@ function App() {
   // 새 작업 추가
   const addTask = async (e) => {
     e.preventDefault()
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
     if (!newTask.trim()) return
 
     try {
@@ -146,6 +155,68 @@ function App() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>GTD on Web</h1>
+      
+      {/* Supabase 설정 안내 */}
+      {!hasSupabaseCredentials && (
+        <div style={{
+          backgroundColor: '#fef3c7',
+          border: '2px solid #fbbf24',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{ margin: '0 0 10px 0', color: '#92400e' }}>⚠️ Supabase 연결 설정이 필요합니다</h2>
+          <p style={{ margin: '10px 0', color: '#78350f' }}>
+            앱을 사용하려면 Supabase 데이터베이스 연결이 필요합니다.
+          </p>
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '15px', 
+            borderRadius: '6px',
+            marginTop: '15px'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>설정 방법:</h3>
+            <ol style={{ margin: '10px 0 10px 20px', lineHeight: '1.8' }}>
+              <li>
+                <strong>Vercel에서 환경 변수 가져오기:</strong>
+                <ul style={{ marginLeft: '20px', marginTop: '5px' }}>
+                  <li><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>Vercel 대시보드</a>로 이동</li>
+                  <li>프로젝트 선택 → Settings → Environment Variables</li>
+                  <li><code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>VITE_SUPABASE_URL</code>과 <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>VITE_SUPABASE_ANON_KEY</code> 값 복사</li>
+                </ul>
+              </li>
+              <li>
+                <strong>프로젝트 루트에 <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>.env</code> 파일 생성:</strong>
+                <pre style={{ 
+                  background: '#1f2937', 
+                  color: '#f9fafb', 
+                  padding: '10px', 
+                  borderRadius: '4px',
+                  overflow: 'auto',
+                  marginTop: '8px',
+                  fontSize: '13px'
+                }}>
+{`VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_anon_key_here`}
+                </pre>
+              </li>
+              <li>
+                <strong>개발 서버 재시작:</strong> <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>npm run dev</code>
+              </li>
+            </ol>
+            <p style={{ 
+              margin: '15px 0 0 0', 
+              fontSize: '14px',
+              padding: '10px',
+              background: '#eff6ff',
+              borderRadius: '4px',
+              borderLeft: '4px solid #3b82f6'
+            }}>
+              💡 <strong>팁:</strong> 자세한 설정 방법은 <code>README.md</code> 또는 <code>VERCEL_SETUP.md</code> 파일을 참고하세요.
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* 새 작업 추가 폼 */}
       <form onSubmit={addTask} style={{ marginBottom: '20px' }}>
