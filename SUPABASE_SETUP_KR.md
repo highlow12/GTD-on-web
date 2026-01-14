@@ -155,10 +155,25 @@ create policy "Users can view their own tasks" on tasks
 
 ## 💡 팁
 
-1. **Supabase Table Editor**: GUI로 데이터를 직접 보고 편집할 수 있습니다
-2. **실시간 구독**: Supabase는 실시간 업데이트를 지원합니다 (추후 구현 가능)
-3. **백업**: Supabase 대시보드에서 데이터베이스 백업 가능
-4. **로그**: Supabase Logs 탭에서 모든 API 호출 확인 가능
+1. **Supabase Table Editor**: 대시보드의 Table Editor 탭에서 GUI를 통해 데이터를 직접 보고 편집할 수 있습니다. 개발 중 데이터 확인에 유용합니다.
+
+2. **실시간 구독**: Supabase는 PostgreSQL의 변경사항을 실시간으로 수신하는 기능을 지원합니다. 향후 여러 사용자가 동시에 작업할 때 유용하게 사용할 수 있습니다.
+   ```javascript
+   // 예시: 실시간 구독
+   supabase
+     .channel('tasks')
+     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, 
+       payload => console.log('Change received!', payload))
+     .subscribe()
+   ```
+
+3. **데이터베이스 백업**: 
+   - Supabase 대시보드 → Database → Backups에서 수동/자동 백업 설정 가능
+   - 무료 플랜: 수동 백업 (언제든지 생성 가능)
+   - Pro 플랜 이상: 자동 일일 백업 + Point-in-Time Recovery (PITR)
+   - 중요한 변경 전에는 항상 백업을 먼저 생성하는 것을 권장
+
+4. **API 로그 확인**: Supabase 대시보드의 Logs 탭에서 모든 API 호출, 쿼리 성능, 에러를 실시간으로 확인할 수 있습니다. 디버깅에 매우 유용합니다.
 
 ## 🚀 다음 단계
 
