@@ -96,6 +96,16 @@ function App() {
     return colors[status] || '#6b7280'
   }
 
+  const getStatusBackgroundColor = (status) => {
+    const color = getStatusColor(status)
+    // Convert hex to rgba with 0.2 opacity
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, 0.2)`
+  }
+
   const statusLabels = {
     inbox: '📥 받은편지함',
     next: '▶️ 다음',
@@ -121,6 +131,17 @@ function App() {
       minute: '2-digit'
     })
   }
+
+  const getViewModeButtonStyle = (mode) => ({
+    padding: '8px 16px',
+    fontSize: '14px',
+    backgroundColor: viewMode === mode ? '#3b82f6' : '#e5e7eb',
+    color: viewMode === mode ? 'white' : '#374151',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: viewMode === mode ? 'bold' : 'normal'
+  })
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
@@ -161,34 +182,10 @@ function App() {
 
       {/* 뷰 모드 전환 버튼 */}
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <button
-          onClick={() => setViewMode('cards')}
-          style={{
-            padding: '8px 16px',
-            fontSize: '14px',
-            backgroundColor: viewMode === 'cards' ? '#3b82f6' : '#e5e7eb',
-            color: viewMode === 'cards' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: viewMode === 'cards' ? 'bold' : 'normal'
-          }}
-        >
+        <button onClick={() => setViewMode('cards')} style={getViewModeButtonStyle('cards')}>
           📋 카드 보기
         </button>
-        <button
-          onClick={() => setViewMode('table')}
-          style={{
-            padding: '8px 16px',
-            fontSize: '14px',
-            backgroundColor: viewMode === 'table' ? '#3b82f6' : '#e5e7eb',
-            color: viewMode === 'table' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: viewMode === 'table' ? 'bold' : 'normal'
-          }}
-        >
+        <button onClick={() => setViewMode('table')} style={getViewModeButtonStyle('table')}>
           📊 테이블 보기
         </button>
       </div>
@@ -295,12 +292,12 @@ function App() {
                     fontFamily: 'monospace',
                     fontSize: '11px',
                     color: '#6b7280',
-                    maxWidth: '100px',
+                    maxWidth: '120px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }} title={task.id}>
-                    {task.id.substring(0, 8)}...
+                    {task.id.substring(0, 13)}...
                   </td>
                   <td style={{ padding: '12px 8px', fontWeight: '500' }}>
                     {task.title}
@@ -312,7 +309,7 @@ function App() {
                     <span style={{
                       padding: '4px 8px',
                       borderRadius: '4px',
-                      backgroundColor: getStatusColor(task.status) + '20',
+                      backgroundColor: getStatusBackgroundColor(task.status),
                       color: getStatusColor(task.status),
                       fontSize: '12px',
                       fontWeight: '500'
