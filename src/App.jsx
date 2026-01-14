@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { supabase } from './supabaseClient'
+import { supabase, hasSupabaseCredentials } from './supabaseClient'
 import './App.css'
 
 function App() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [newTask, setNewTask] = useState('')
+  const [viewMode, setViewMode] = useState('cards') // 'cards' or 'table'
 
   // 작업 목록 불러오기
   useEffect(() => {
@@ -13,6 +14,11 @@ function App() {
   }, [])
 
   const fetchTasks = async () => {
+    if (!hasSupabaseCredentials) {
+      setLoading(false)
+      return
+    }
+    
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -33,6 +39,10 @@ function App() {
   // 새 작업 추가
   const addTask = async (e) => {
     e.preventDefault()
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
     if (!newTask.trim()) return
 
     try {
@@ -52,6 +62,11 @@ function App() {
 
   // 작업 상태 변경
   const updateTaskStatus = async (id, newStatus) => {
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
+    
     try {
       const { error } = await supabase
         .from('tasks')
@@ -70,6 +85,11 @@ function App() {
 
   // 작업 삭제
   const deleteTask = async (id) => {
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
+    
     try {
       const { error } = await supabase
         .from('tasks')
@@ -95,6 +115,16 @@ function App() {
     return colors[status] || '#6b7280'
   }
 
+  const getStatusBackgroundColor = (status) => {
+    const color = getStatusColor(status)
+    // Convert hex to rgba with 0.2 opacity
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, 0.2)`
+  }
+
   const statusLabels = {
     inbox: '📥 받은편지함',
     next: '▶️ 다음',
@@ -103,12 +133,103 @@ function App() {
     done: '✅ 완료'
   }
 
+  const priorityLabels = {
+    low: '낮음',
+    medium: '보통',
+    high: '높음'
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    const date = new Date(dateString)
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getViewModeButtonStyle = (mode) => ({
+    padding: '8px 16px',
+    fontSize: '14px',
+    backgroundColor: viewMode === mode ? '#3b82f6' : '#e5e7eb',
+    color: viewMode === mode ? 'white' : '#374151',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: viewMode === mode ? 'bold' : 'normal'
+  })
+
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>GTD on Web</h1>
       
+      {/* Supabase 설정 안내 */}
+      {!hasSupabaseCredentials && (
+        <div style={{
+          backgroundColor: '#fef3c7',
+          border: '2px solid #fbbf24',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{ margin: '0 0 10px 0', color: '#92400e' }}>⚠️ Supabase 연결 설정이 필요합니다</h2>
+          <p style={{ margin: '10px 0', color: '#78350f' }}>
+            앱을 사용하려면 Supabase 데이터베이스 연결이 필요합니다.
+          </p>
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '15px', 
+            borderRadius: '6px',
+            marginTop: '15px'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>설정 방법:</h3>
+            <ol style={{ margin: '10px 0 10px 20px', lineHeight: '1.8' }}>
+              <li>
+                <strong>Vercel에서 환경 변수 가져오기:</strong>
+                <ul style={{ marginLeft: '20px', marginTop: '5px' }}>
+                  <li><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>Vercel 대시보드</a>로 이동</li>
+                  <li>프로젝트 선택 → Settings → Environment Variables</li>
+                  <li><code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>VITE_SUPABASE_URL</code>과 <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>VITE_SUPABASE_ANON_KEY</code> 값 복사</li>
+                </ul>
+              </li>
+              <li>
+                <strong>프로젝트 루트에 <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>.env</code> 파일 생성:</strong>
+                <pre style={{ 
+                  background: '#1f2937', 
+                  color: '#f9fafb', 
+                  padding: '10px', 
+                  borderRadius: '4px',
+                  overflow: 'auto',
+                  marginTop: '8px',
+                  fontSize: '13px'
+                }}>
+{`VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_anon_key_here`}
+                </pre>
+              </li>
+              <li>
+                <strong>개발 서버 재시작:</strong> <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px' }}>npm run dev</code>
+              </li>
+            </ol>
+            <p style={{ 
+              margin: '15px 0 0 0', 
+              fontSize: '14px',
+              padding: '10px',
+              background: '#eff6ff',
+              borderRadius: '4px',
+              borderLeft: '4px solid #3b82f6'
+            }}>
+              💡 <strong>팁:</strong> 자세한 설정 방법은 <code>README.md</code> 또는 <code>VERCEL_SETUP.md</code> 파일을 참고하세요.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* 새 작업 추가 폼 */}
-      <form onSubmit={addTask} style={{ marginBottom: '30px' }}>
+      <form onSubmit={addTask} style={{ marginBottom: '20px' }}>
         <input
           type="text"
           value={newTask}
@@ -140,6 +261,16 @@ function App() {
         </button>
       </form>
 
+      {/* 뷰 모드 전환 버튼 */}
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+        <button onClick={() => setViewMode('cards')} style={getViewModeButtonStyle('cards')}>
+          📋 카드 보기
+        </button>
+        <button onClick={() => setViewMode('table')} style={getViewModeButtonStyle('table')}>
+          📊 테이블 보기
+        </button>
+      </div>
+
       {/* 작업 목록 */}
       {loading ? (
         <p>로딩 중...</p>
@@ -147,7 +278,7 @@ function App() {
         <p style={{ textAlign: 'center', color: '#6b7280' }}>
           아직 작업이 없습니다. 위에서 작업을 추가해보세요!
         </p>
-      ) : (
+      ) : viewMode === 'cards' ? (
         <div>
           <h3>작업 목록 ({tasks.length}개)</h3>
           {tasks.map(task => (
@@ -205,6 +336,107 @@ function App() {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <h3>데이터베이스 테이블 보기 ({tasks.length}개)</h3>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            backgroundColor: 'white',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            fontSize: '14px'
+          }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>ID</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>제목</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>설명</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>상태</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>우선순위</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>생성일시</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>수정일시</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map((task, index) => (
+                <tr 
+                  key={task.id}
+                  style={{ 
+                    borderBottom: '1px solid #e5e7eb',
+                    backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
+                  }}
+                >
+                  <td style={{ 
+                    padding: '12px 8px',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    maxWidth: '120px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }} title={task.id}>
+                    {task.id.substring(0, 13)}...
+                  </td>
+                  <td style={{ padding: '12px 8px', fontWeight: '500' }}>
+                    {task.title}
+                  </td>
+                  <td style={{ padding: '12px 8px', color: '#6b7280', maxWidth: '200px' }}>
+                    {task.description || '-'}
+                  </td>
+                  <td style={{ padding: '12px 8px' }}>
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: getStatusBackgroundColor(task.status),
+                      color: getStatusColor(task.status),
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {statusLabels[task.status]}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 8px' }}>
+                    {priorityLabels[task.priority] || task.priority || '-'}
+                  </td>
+                  <td style={{ 
+                    padding: '12px 8px',
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {formatDate(task.created_at)}
+                  </td>
+                  <td style={{ 
+                    padding: '12px 8px',
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {formatDate(task.updated_at)}
+                  </td>
+                  <td style={{ padding: '12px 8px' }}>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
