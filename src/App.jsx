@@ -62,6 +62,11 @@ function App() {
 
   // 작업 상태 변경
   const updateTaskStatus = async (id, newStatus) => {
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
+    
     try {
       const { error } = await supabase
         .from('tasks')
@@ -80,6 +85,11 @@ function App() {
 
   // 작업 삭제
   const deleteTask = async (id) => {
+    if (!hasSupabaseCredentials) {
+      alert('먼저 Supabase 연결을 설정해주세요. README.md 파일을 참고하세요.')
+      return
+    }
+    
     try {
       const { error } = await supabase
         .from('tasks')
